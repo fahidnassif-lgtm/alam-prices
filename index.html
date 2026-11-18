@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>أسعار الجملة — عالم الشيقل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14213d;--acc:#0a7d4f;--bg:#f4f5f7;--card:#fff;--mut:#6b7280;--line:#e5e7eb}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:#111}
+header{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:12px 14px 14px}
+h1{margin:0 0 2px;font-size:19px;font-weight:800}
+.sub{font-size:12px;opacity:.75}
+.bar{display:flex;gap:8px;margin-top:10px}
+.bar input{flex:1;min-width:0;font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:0;outline:none}
+.ib{flex:none;width:50px;height:50px;border-radius:12px;border:0;background:#fff;display:grid;place-items:center;cursor:pointer}
+.ib svg{width:26px;height:26px;stroke:var(--navy)}
+main{padding:12px;max-width:720px;margin:auto}
+.msg{color:var(--mut);text-align:center;padding:28px 10px;font-size:15px}
+.card{background:var(--card);border-radius:14px;padding:10px;display:flex;gap:12px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.card img,.card .ph{width:84px;height:84px;object-fit:contain;border-radius:10px;background:#fafafa;flex:none}
+.info{flex:1;min-width:0}
+.nm{font-weight:700;font-size:16px;line-height:1.35}
+.meta{font-size:12px;color:var(--mut);margin-top:2px}
+.wp{margin-top:6px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.wp b{font-size:24px;color:var(--acc);font-weight:800}
+.wp span{font-size:13px;color:var(--mut)}
+.vars{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.vr{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0}
+.vr b{color:var(--acc)}
+.tag{display:inline-block;background:#eef2ff;color:var(--navy);border-radius:6px;padding:1px 6px;font-size:11px;margin-inline-start:4px}
+.note{background:#fff7e6;border:1px solid #fde3a7;color:#7a5200;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+.qimg{width:70px;height:70px;object-fit:cover;border-radius:10px;vertical-align:middle;margin-inline-end:8px}
+</style>
+</head>
+<body>
+<header>
+<h1>أسعار الجملة — عالم الشيقل</h1>
+<div class="sub" id="st">جاري تحميل المنتجات…</div>
+<div class="bar">
+<input id="q" type="search" placeholder="اسم المنتج أو الباركود" autocomplete="off" enterkeyhint="search">
+<button class="ib" id="bScan" title="صوّر الباركود" aria-label="صوّر الباركود"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></button>
+<button class="ib" id="bPhoto" title="صوّر المنتج" aria-label="صوّر المنتج"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+</div>
+<input id="fileB" type="file" accept="image/*" capture="environment" hidden>
+<input id="fileP" type="file" accept="image/*" capture="environment" hidden>
+</header>
+<main id="out"><div class="msg">اكتب اسم المنتج، أو صوّر الباركود، أو صوّر المنتج.</div></main>
+<div id="gate" style="display:none;position:fixed;inset:0;background:#fff;z-index:99;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-family:inherit;direction:rtl">
+<div style="font-size:20px;font-weight:700">أسعار الجملة — عالم الشيقل</div>
+<input id="gpw" type="password" inputmode="numeric" placeholder="كلمة السر" style="font-size:18px;padding:10px 14px;border:1px solid #ccc;border-radius:10px;width:220px;text-align:center" onkeydown="if(event.key==='Enter')unlock()">
+<button onclick="unlock()" style="font-size:17px;padding:10px 28px;border:0;border-radius:10px;background:#0071e3;color:#fff">دخول</button>
+<div id="gerr" style="color:#c00;min-height:20px"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+let P=[],TH={},EMB=null,model=null;
+const norm=s=>(s||'').toString().toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g,' ').trim();
+const money=v=>(v===null||v===undefined||v===''||isNaN(+v))?'—':(Math.round(+v*100)/100)+' ₪';
+const esc=s=>(s||'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+
+
+async function decryptWith(pw,e){const d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+ const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:d(e.s),iterations:200000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+ return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:d(e.i)},key,d(e.c))))}
+let ENC=null;
+async function getData(){
+ if(!ENC)ENC=await (await fetch('data.enc.json',{cache:'no-cache'})).json();
+ let pw=null;try{pw=localStorage.getItem('alam_pw')}catch(e){}
+ if(pw){try{return await decryptWith(pw,ENC)}catch(e){try{localStorage.removeItem('alam_pw')}catch(_){}}}
+ $('#gate').style.display='flex';$('#st').textContent='اكتب كلمة السر';return null}
+async function unlock(){const pw=$('#gpw').value.trim();if(!pw)return;$('#gerr').textContent='لحظة...';
+ try{await decryptWith(pw,ENC);try{localStorage.setItem('alam_pw',pw)}catch(e){}$('#gate').style.display='none';$('#gerr').textContent='';load()}
+ catch(e){$('#gerr').textContent='كلمة السر غلط'}}
+async function load(){
+ try{const j=await getData();if(!j)return;
+  P=j.p.map(([id,name,cat,barcode,w,r,unit,stock,vs,per])=>{const vv=vs.map(([label,bc,vw,vr])=>({label,barcode:bc,w:vw,r:vr}));
+   const codes=[barcode,...vv.map(v=>v.barcode)].filter(Boolean).map(String);
+   return {id,name,cat,barcode,w,r,unit,per,stock,vs:vv,codes,key:norm(name+' '+cat+' '+vv.map(v=>v.label).join(' '))}});
+  const d=new Date(j.t);$('#st').textContent=P.length+' منتج — آخر تحديث '+d.toLocaleDateString('ar',{weekday:'long',day:'numeric',month:'numeric'})+' '+d.toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
+  if($('#q').value)search();
+ }catch(e){$('#st').textContent='ما قدرت أفتح قائمة المنتجات، حدّث الصفحة'}
+ try{TH=await (await fetch('thumbs.json')).json();if($('#out .card'))redraw()}catch(e){}
+}
+let last=null;
+function card(p){
+ const vars=p.vs.length?'<div class="vars">'+p.vs.map(v=>`<div class="vr"><span>${esc(v.label||'خيار')}${v.barcode?` <span class="tag">${esc(v.barcode)}</span>`:''}</span><span>جملة <b>${money(v.w)}</b> · مفرق ${money(v.r)}</span></div>`).join('')+'</div>':'';
+ const im=TH[p.id]?`<img src="${TH[p.id]}" alt="">`:'<div class="ph"></div>';
+ return `<div class="card">${im}<div class="info"><div class="nm">${esc(p.name)}</div>
+ <div class="meta">${esc(p.cat)}${p.barcode?' · باركود '+esc(p.barcode):''}${p.stock!=null?' · المخزون '+p.stock:''}</div>
+ <div class="wp"><b>${money(p.w)}</b><span>جملة${p.unit?' / '+esc(p.unit)+(p.per>1?' ('+p.per+' قطعة)':''):''}</span><span>· مفرق ${money(p.r)}</span></div>${vars}</div></div>`}
+function render(list,head){last=[list,head];redraw()}
+function redraw(){if(!last)return;const [list,head]=last;$('#out').innerHTML=(head||'')+(list.length?list.map(card).join(''):'<div class="msg">ما لقيت منتج بهالبحث.</div>')}
+function msg(h){last=null;$('#out').innerHTML=h}
+
+function search(){
+ const q=norm($('#q').value);if(!q)return msg('<div class="msg">اكتب اسم المنتج، أو صوّر الباركود، أو صوّر المنتج.</div>');
+ if(/^\d{4,}$/.test(q)){const ex=P.filter(p=>p.codes.includes(q));if(ex.length)return render(ex);const part=P.filter(p=>p.codes.some(c=>c.includes(q)));if(part.length)return render(part.slice(0,50))}
+ const t=q.split(' ');const res=P.filter(p=>t.every(w=>p.key.includes(w)||p.codes.some(c=>c.includes(w))));
+ res.sort((a,b)=>(norm(b.name).startsWith(q)-norm(a.name).startsWith(q))||a.name.length-b.name.length);
+ render(res.slice(0,60),res.length>60?`<div class="msg" style="padding:6px">${res.length} نتيجة — كمّل كتابة لتضييق البحث</div>`:'');
+}
+let tm;$('#q').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(search,150)});
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){$('#q').blur();search()}});
+
+// ---- barcode from a photo ----
+async function decodeShot(file){
+ msg('<div class="msg">جاري قراءة الباركود…</div>');
+ try{let code=null;
+  if('BarcodeDetector' in window){try{const r=await new BarcodeDetector().detect(await createImageBitmap(file));if(r.length)code=r[0].rawValue}catch(e){}}
+  if(!code){if(!window.ZXingBrowser)await loadScript('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js');
+   try{const res=await new ZXingBrowser.BrowserMultiFormatReader().decodeFromImageUrl(URL.createObjectURL(file));code=res.getText()}catch(e){}}
+  if(!code)return msg('<div class="note">ما قدرت أقرأ الباركود من الصورة. قرّب الكاميرا وخلّي الباركود واضح ومستقيم، أو اكتب الأرقام بخانة البحث.</div>');
+  $('#q').value=code;const ex=P.filter(p=>p.codes.includes(String(code)));
+  if(ex.length)return render(ex);
+  msg(`<div class="msg">الباركود <b>${esc(code)}</b> مش مسجّل لأي منتج بالقائمة.<br>جرّب البحث بالاسم أو بالصورة.</div>`);
+ }catch(e){msg('<div class="note">ما زبطت قراءة الصورة، جرّب مرة ثانية.</div>')}
+}
+$('#bScan').onclick=()=>{$('#fileB').value='';$('#fileB').click()};
+$('#fileB').onchange=e=>{const f=e.target.files[0];if(f)decodeShot(f)};
+
+// ---- photo search ----
+const NODE='module_apply_default/MobilenetV2/Logits/AvgPool';
+async function prep(){
+ if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+ if(!model){const [mj,wj]=await Promise.all([fetch('model/model.json').then(r=>r.json()),fetch('model/weights.json').then(r=>r.json())]);
+ const b=atob(wj.b64);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+ model=await tf.loadGraphModel(tf.io.fromMemory({modelTopology:mj.modelTopology,weightSpecs:mj.weightsManifest[0].weights,weightData:u.buffer,format:mj.format,generatedBy:mj.generatedBy,convertedBy:mj.convertedBy,signature:mj.signature,userDefinedMetadata:mj.userDefinedMetadata}))}
+ if(!EMB){const e=await (await fetch('emb.json')).json();const b=atob(e.b64);const a=new Int8Array(b.length);for(let i=0;i<b.length;i++)a[i]=(b.charCodeAt(i)<<24)>>24;EMB={ids:e.ids,v:a}}
+}
+async function photoSearch(file){
+ const url=URL.createObjectURL(file);
+ msg(`<div class="msg"><img class="qimg" src="${url}">جاري البحث عن المنتج…</div>`);
+ try{await prep();const bmp=await createImageBitmap(file);
+  const c=document.createElement('canvas');c.width=c.height=224;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,224,224);
+  const s=Math.min(bmp.width,bmp.height)*0.9;g.drawImage(bmp,(bmp.width-s)/2,(bmp.height-s)/2,s,s,0,0,224,224);
+  const x=tf.tidy(()=>tf.browser.fromPixels(c).toFloat().div(255).expandDims(0));const e=model.execute(x,NODE);const q=await e.data();x.dispose();e.dispose();
+  const byId=new Map(P.map(p=>[p.id,p]));const sc=[];
+  for(let i=0;i<EMB.ids.length;i++){let a=0;const o=i*1280;for(let j=0;j<1280;j++)a+=q[j]*EMB.v[o+j];sc.push([EMB.ids[i],a])}
+  sc.sort((a,b)=>b[1]-a[1]);const top=sc.filter(([id])=>byId.has(id)).slice(0,8).map(([id])=>byId.get(id));
+  render(top,`<div class="note"><img class="qimg" src="${url}">هذول أقرب المنتجات لصورتك، الأقرب أول. إذا ما طلع، صوّر المنتج لحاله وقرّب عليه.</div>`);
+ }catch(err){console.error(err);msg('<div class="note">ما زبط البحث بالصورة. حدّث الصفحة وجرّب مرة ثانية.</div>')}
+}
+$('#bPhoto').onclick=()=>{$('#fileP').value='';$('#fileP').click()};
+$('#fileP').onchange=e=>{const f=e.target.files[0];if(f)photoSearch(f)};
+load();
+</script>
+</body>
+</html>
